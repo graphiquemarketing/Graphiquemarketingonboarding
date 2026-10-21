@@ -1,0 +1,1 @@
+Copiar aquí montserrat-latin-wght-normal.woff2 y montserrat-latin-wght-italic.woff2 desde fuente/activos/fonts/ del sitio (licencia SIL OFL incluida allí).
