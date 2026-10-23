@@ -6,6 +6,8 @@ import { PACKAGES, type PackageCode } from '@/lib/catalog';
 import { MODULES, UNKNOWN, isVisible, labelFor, moduleProgress, optionsFor, pagesOver, progress, type Answers, type Question } from '@/lib/questionnaire';
 import { classifyFunction } from '@/lib/scope';
 import { track } from '@/lib/analytics';
+import { Ring } from '@/components/Ring';
+import { Icon } from '@/components/Icon';
 import { saveAnswerAction } from '@/app/cliente/actions';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'offline' | 'error' | 'conflict';
@@ -77,30 +79,54 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
   const pct = progress(pkg, answers);
   const last = moduleIndex === MODULES.length - 1;
 
+  const saveLabel = status === 'saved' && savedAt ? `Guardado ${savedAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}` : SAVE_TEXT[status];
+  const mp = moduleProgress(mod, pkg, answers);
   return (
-    <div className="stack">
-      <div className="row between">
-        <span className={`save ${SAVE_CLASS[status]}`} role="status" aria-live="polite">
-          {status === 'saved' && savedAt ? `Guardado ${savedAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}` : SAVE_TEXT[status]}
-        </span>
-        <span className="small muted">{pct}% del brief</span>
-      </div>
-      <div className="prog" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Avance del brief"><i style={{ width: `${pct}%` }} /></div>
-      <nav className="steps" aria-label="Módulos del brief">
-        {MODULES.map((m, i) => {
-          const p = moduleProgress(m, pkg, answers);
-          return <Link key={m.id} href={`/cliente/proyectos/${projectId}/brief/${m.id}`} aria-current={i === moduleIndex ? 'step' : undefined}
-            className={p.total && p.done === p.total ? 'done' : undefined} onClick={async (e) => { e.preventDefault(); await go(i); }}>{m.id} {m.title}</Link>;
-        })}
-      </nav>
-      {error && status !== 'saved' && <div className="note bad" role="alert">{error}{status === 'conflict' && <> <button className="linkbtn" type="button" onClick={() => location.reload()}>Recargar</button></>}</div>}
-      <form className="stack" noValidate onSubmit={(e) => e.preventDefault()}>
-        {visible.map((q) => <QuestionField key={q.id} q={q} pkg={pkg} answers={answers} onChange={set} />)}
-      </form>
-      <div className="row between">
-        <button className="btn line" type="button" disabled={moduleIndex === 0} onClick={() => go(moduleIndex - 1)}>Volver</button>
-        <button className="btn" type="button" onClick={() => go(moduleIndex + 1)}>{last ? 'Revisar y enviar' : 'Continuar'}</button>
-      </div>
+    <div className="brief">
+      <aside className="rail" aria-label="Avance del brief">
+        <div className="rail-card row" style={{ gap: 14 }}>
+          <Ring value={pct} size={64} label={`Brief ${pct}% completo`} />
+          <div className="stack" style={{ gap: 2 }}><b>Tu brief</b><span className={`save ${SAVE_CLASS[status]}`} role="status" aria-live="polite">{saveLabel}</span></div>
+        </div>
+        <nav className="rail-card" aria-label="Módulos del brief">
+          <ol className="rail-list">
+            {MODULES.map((m, i) => {
+              const p = moduleProgress(m, pkg, answers);
+              const done = p.total > 0 && p.done === p.total;
+              return (
+                <li key={m.id}>
+                  <Link href={`/cliente/proyectos/${projectId}/brief/${m.id}`} aria-current={i === moduleIndex ? 'step' : undefined} className={done ? 'done' : undefined}
+                    onClick={async (e) => { e.preventDefault(); await go(i); }}>
+                    <span className="n">{done ? '✓' : String(i + 1).padStart(2, '0')}</span>
+                    <span>{m.title}</span>
+                    <small>{p.done}/{p.total}</small>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      </aside>
+      <section className="qcard rise" aria-labelledby="mod-title">
+        <header className="qcard-head">
+          <div className="row between">
+            <span className="kicker">Módulo {String(moduleIndex + 1).padStart(2, '0')} de {MODULES.length} · {PACKAGES[pkg].name}</span>
+            <span className="small muted">{mp.done} de {mp.total} respondidas</span>
+          </div>
+          <h1 id="mod-title" style={{ fontSize: 'clamp(24px, 2.6vw, 30px)' }}>{mod.title}</h1>
+          <div className="prog" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Avance total del brief"><i style={{ width: `${pct}%` }} /></div>
+        </header>
+        <div className="qcard-body">
+          {error && status !== 'saved' && <div className="note bad" role="alert">{error}{status === 'conflict' && <> <button className="linkbtn" type="button" onClick={() => location.reload()}>Recargar</button></>}</div>}
+          <form noValidate onSubmit={(e) => e.preventDefault()}>
+            {visible.map((q) => <QuestionField key={q.id} q={q} pkg={pkg} answers={answers} onChange={set} />)}
+          </form>
+        </div>
+        <footer className="qcard-foot">
+          <button className="btn line" type="button" disabled={moduleIndex === 0} onClick={() => go(moduleIndex - 1)}><Icon name="arrowLeft" size={16} />Anterior</button>
+          <button className="btn" type="button" onClick={() => go(moduleIndex + 1)}>{last ? 'Revisar y enviar' : 'Guardar y continuar'} <Icon name="arrowRight" size={16} /></button>
+        </footer>
+      </section>
     </div>
   );
 }

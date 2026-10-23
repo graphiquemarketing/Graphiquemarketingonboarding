@@ -27,6 +27,11 @@ const MESSAGES: Record<string, string> = {
   ALCANCE_BLOQUEADO: 'El alcance solo se clasifica durante la revisión.',
   ALCANCE_PENDIENTE: 'Hay partidas pendientes o ampliaciones sin decidir.',
   ACLARACIONES_ABIERTAS: 'Hay aclaraciones sin respuesta.',
+  USUARIO_INVALIDO: 'No encontramos esa cuenta.',
+  ES_CLIENTE: 'Esa cuenta pertenece a un cliente; usa otro correo para el equipo.',
+  NO_PUEDES_QUITARTE_ACCESO: 'No puedes desactivarte ni quitarte el rol de administrador a ti mismo.',
+  FALTA_NOMBRE: 'Escribe el nombre de la persona.',
+  DEBE_HABER_UN_ADMIN: 'Debe quedar al menos un administrador activo.',
   REGISTRO_INMUTABLE: 'Las versiones aprobadas y la auditoría no se modifican.',
 };
 

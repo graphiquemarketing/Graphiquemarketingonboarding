@@ -18,7 +18,26 @@ export function Note({ tone, children }: { tone?: 'warn' | 'bad' | 'ok'; childre
 }
 
 export function Back({ href, children }: { href: string; children: React.ReactNode }) {
-  return <Link className="small" href={href}>← {children}</Link>;
+  return <Link className="crumb" href={href}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>{children}</Link>;
+}
+
+/** Encabezado de página: migas, título, descripción y acciones. */
+export function PageHead({ back, kicker, title, intro, actions }: { back?: { href: string; label: string }; kicker?: React.ReactNode; title: React.ReactNode; intro?: React.ReactNode; actions?: React.ReactNode }) {
+  return (
+    <div className="stack" style={{ gap: 12 }}>
+      {back && <Back href={back.href}>{back.label}</Back>}
+      <div className="page-head">
+        <div className="stack">{kicker && <span className="kicker">{kicker}</span>}<h1>{title}</h1>{intro && <p className="lead">{intro}</p>}</div>
+        {actions && <div className="row">{actions}</div>}
+      </div>
+    </div>
+  );
+}
+
+/** Ícono de archivo con la extensión. */
+export function FileIcon({ name }: { name: string }) {
+  const ext = (name.split('.').pop() ?? '').slice(0, 4);
+  return <span className="ficon" aria-hidden="true">{ext}</span>;
 }
 
 export function fmtDate(iso: string) {

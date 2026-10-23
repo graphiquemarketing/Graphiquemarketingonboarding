@@ -3,7 +3,8 @@ import { requireStaff } from '@/lib/server/session';
 import { getProject } from '@/lib/server/data';
 import { PACKAGES, PACKAGE_CODES } from '@/lib/catalog';
 import { genericActions } from '@/lib/states';
-import { Back, Note, StatePill, fmtDate } from '@/components/ui';
+import { Note, PageHead, StatePill, fmtDate } from '@/components/ui';
+import { Icon } from '@/components/Icon';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ActionForm } from '../../ActionForm';
 import { changePackageAction, confirmContractAction, inviteAction, transitionAction } from '../../actions';
@@ -24,20 +25,16 @@ export default async function Proyecto({ params, searchParams }: { params: Promi
   const canInvite = ['CONTRATADO', 'INVITACION_PENDIENTE', 'BRIEF_EN_PROGRESO', 'INFORMACION_PENDIENTE'].includes(p.state) && staff.role !== 'admin_tecnico';
   const briefOpen = !preContract && p.state !== 'CONTRATADO' && p.state !== 'DESCARTADA';
   return (
-    <div className="wrap stack">
-      <Back href="/admin">Proyectos</Back>
+    <div className="stack" style={{ gap: 22 }}>
+      <PageHead back={{ href: '/admin', label: 'Proyectos' }} kicker={<span className="mono">{p.folio} · {P.name}</span>} title={p.organizations?.name}
+        actions={<><StatePill state={p.state} />{briefOpen && <>
+          <Link className="btn sm line" href={`/admin/proyectos/${id}/revision`}><Icon name="layers" size={15} />Revisión</Link>
+          {staff.role === 'pm' && p.state === 'EN_REVISION' && <Link className="btn sm" href={`/admin/proyectos/${id}/aprobacion`}><Icon name="shield" size={15} />Aprobar</Link>}
+          <Link className="btn sm line" href={`/admin/proyectos/${id}/exportar`}><Icon name="download" size={15} />Expediente</Link></>}</>} />
       {sp.duplicado && <Note tone="warn">Ese correo ya tenía una solicitud abierta: este es su expediente.</Note>}
-      <div className="row between"><div><span className="kicker mono">{p.folio}</span><h1>{p.organizations?.name}</h1></div><StatePill state={p.state} /></div>
-      {briefOpen && (
-        <nav className="row">
-          <Link className="btn soft sm" href={`/admin/proyectos/${id}/revision`}>Revisión del brief</Link>
-          {staff.role === 'pm' && p.state === 'EN_REVISION' && <Link className="btn soft sm" href={`/admin/proyectos/${id}/aprobacion`}>Aprobación</Link>}
-          <Link className="btn soft sm" href={`/admin/proyectos/${id}/exportar`}>Expediente</Link>
-        </nav>
-      )}
       <div className="grid2">
         <div className="stack">
-          <div className="panel stack">
+          <div className="panel lg stack">
             <h2>Proyecto</h2>
             <dl className="kv">
               <dt>Paquete</dt><dd>{P.name} · {P.priceLabel} · {P.limitLabel} (catálogo {p.package_version})</dd>
@@ -93,7 +90,7 @@ export default async function Proyecto({ params, searchParams }: { params: Promi
           )}
         </div>
         <aside className="panel stack">
-          <h3>Auditoría</h3>
+          <div className="panel-title"><h3>Actividad</h3><span className="small muted">Auditoría</span></div>
           <ul className="log">{(audit ?? []).map((a) => <li key={a.id}><b>{a.action}</b> {a.detail?.de ? `${a.detail.de} → ${a.detail.a}` : ''}<br /><span className="muted">{a.actor_label} · {fmtDate(a.at)}</span></li>)}</ul>
         </aside>
       </div>

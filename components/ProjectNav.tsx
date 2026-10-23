@@ -6,9 +6,8 @@ export function ProjectNav({ id, current, pendingReviews }: { id: string; curren
   return (
     <nav className="steps" aria-label="Secciones del proyecto">
       {TABS.map(([path, label]) => (
-        <Link key={path} href={`/cliente/proyectos/${id}${path}`} aria-current={current === label ? 'page' : undefined}
-          style={current === label ? { borderColor: 'var(--magenta)', color: 'var(--magenta)' } : undefined}>
-          {label}{label === 'Aclaraciones' && pendingReviews ? ` (${pendingReviews})` : ''}
+        <Link key={path} href={`/cliente/proyectos/${id}${path}`} aria-current={current === label ? 'page' : undefined}>
+          {label}{label === 'Aclaraciones' && pendingReviews ? <span className="pill tone-bad" style={{ padding: '0 7px' }}>{pendingReviews}</span> : null}
         </Link>
       ))}
     </nav>

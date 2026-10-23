@@ -12,7 +12,7 @@ export function StaffLogin() {
       <div className="field"><label htmlFor="st_mail">Correo</label><input id="st_mail" name="email" type="email" autoComplete="username" required /></div>
       <div className="field"><label htmlFor="st_pw">Contraseña</label><input id="st_pw" name="password" type="password" autoComplete="current-password" required /></div>
       {pw.error && <p className="err" role="alert">{pw.error}</p>}
-      <div><SubmitButton pending="Verificando…">Continuar</SubmitButton></div>
+      <SubmitButton className="btn block lg" pending="Verificando…">Continuar</SubmitButton>
     </form>
   );
   return (
@@ -27,7 +27,7 @@ export function StaffLogin() {
       ) : <p>Escribe el código de 6 dígitos de tu app de autenticación.</p>}
       <CodeInput invalid={!!mfa.error} />
       {mfa.error && <p className="err" role="alert">{mfa.error}</p>}
-      <div><SubmitButton pending="Verificando…">Entrar al panel</SubmitButton></div>
+      <SubmitButton className="btn block lg" pending="Verificando…">Entrar al panel</SubmitButton>
     </form>
   );
 }

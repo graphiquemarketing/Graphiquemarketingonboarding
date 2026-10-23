@@ -7,7 +7,7 @@ import { supabaseAdmin } from '../supabase/server';
  * Sin RESEND_API_KEY (staging) el correo no sale: se registra como ENVIADO con la marca «simulado» y se imprime en el log.
  * Nunca se incluyen tokens de sesión ni archivos; el único enlace con token es la invitación (72 h, un solo uso).
  */
-export type EmailKind = 'solicitud_recibida' | 'invitacion' | 'brief_enviado' | 'aclaracion' | 'brief_aprobado' | 'interno';
+export type EmailKind = 'solicitud_recibida' | 'invitacion' | 'brief_enviado' | 'aclaracion' | 'brief_aprobado' | 'interno' | 'activacion_equipo';
 
 interface Mail { kind: EmailKind; to: string; subject: string; text: string; projectId?: string }
 
@@ -33,6 +33,10 @@ export const templates = {
   briefAprobado: (folio: string, version: number) => ({
     subject: `Tu brief está aprobado · ${folio}`,
     text: `Aprobamos la versión ${version} de tu brief. El siguiente paso es la planeación técnica; te contactaremos con el calendario.\n\nLa aprobación del brief no sustituye la aprobación de diseño ni de contenidos finales.${SIGN}`,
+  }),
+  activacionEquipo: (nombre: string, rol: string, url: string) => ({
+    subject: 'Activa tu cuenta del panel de Graphique',
+    text: `Hola ${nombre}:\n\nTe dieron de alta en el panel del portal de clientes de Graphique con el rol ${rol}.\n\n1. Abre este enlace y crea tu contraseña:\n${url}\n\n2. Entra al panel y configura tu verificación en dos pasos con Google Authenticator, 1Password u otra app.\n\nEl enlace funciona una sola vez y vence pronto. Si vence, pide a un administrador que te lo reenvíe.${SIGN}`,
   }),
   interno: (titulo: string, folio: string, url: string) => ({
     subject: `[Portal] ${titulo} · ${folio}`,

@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/server/session';
 import { getAnswers, getApprovals, getFiles, getOverrides, getProject, getReviews, latestFiles } from '@/lib/server/data';
 import { MODULES, isVisible, labelFor, missingRequired, plainAnswer } from '@/lib/questionnaire';
 import { PM_CLASSES, SCOPE_LABEL, scopeItems } from '@/lib/scope';
-import { Back, Note, ScopePill, StatePill, fmtDate, kb } from '@/components/ui';
+import { PageHead, Note, ScopePill, StatePill, fmtDate, kb } from '@/components/ui';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ActionForm } from '../../../ActionForm';
 import { clarifyAction, reviewFileAction, setScopeAction } from '../../../actions';
@@ -21,8 +21,7 @@ export default async function Revision({ params }: { params: Promise<{ id: strin
   const changed = last ? Object.keys({ ...answers, ...last.answers }).filter((k) => JSON.stringify(answers[k] ?? null) !== JSON.stringify(last.answers[k] ?? null)) : [];
   return (
     <div className="wrap stack">
-      <Back href={`/admin/proyectos/${id}`}>{p.folio} · {p.organizations?.name}</Back>
-      <div className="row between"><h1>Revisión del brief</h1><StatePill state={p.state} /></div>
+      <PageHead back={{ href: `/admin/proyectos/${id}`, label: `${p.folio} · ${p.organizations?.name ?? ''}` }} kicker="Revisión" title="Brief, alcance y archivos" actions={<><StatePill state={p.state} />{staff.role === 'pm' && p.state === 'EN_REVISION' && <Link className="btn sm" href={`/admin/proyectos/${id}/aprobacion`}>Ir a aprobación</Link>}</>} />
       {p.state === 'BRIEF_ENVIADO' && <Note>Usa «Iniciar revisión» en el detalle del proyecto para poder pedir aclaraciones o aprobar.</Note>}
       {miss.length ? <Note tone="warn"><b>Obligatorias sin responder:</b> {miss.map((m) => `${m.module.id} · ${labelFor(m.question, p.package_code)}`).join('; ')}</Note> : <Note tone="ok">Todas las obligatorias tienen respuesta.</Note>}
       {last && <p className="small">Última versión aprobada: <b>v{last.version}</b> ({fmtDate(last.approved_at)}, {last.approved_by_label}, huella <span className="mono">{last.hash.slice(0, 12)}</span>). Cambios desde entonces: <b>{changed.length}</b>{changed.length ? ` (${changed.join(', ')})` : ''}.</p>}

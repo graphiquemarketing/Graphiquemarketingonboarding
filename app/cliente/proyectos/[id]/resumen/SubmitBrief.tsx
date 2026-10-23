@@ -12,7 +12,7 @@ export function SubmitBrief({ projectId, blocked }: { projectId: string; blocked
       <p className="small">Después de enviarlo ya no podrás editar hasta que Graphique te pida información. Las solicitudes de ampliación no quedan incluidas hasta que Graphique las autorice.</p>
       <label className="check"><input type="checkbox" name="confirm" required /><span>Confirmo que la información es correcta y no incluye contraseñas.</span></label>
       {!s.ok && <p className="err" role="alert">{s.error}</p>}
-      <div><SubmitButton disabled={blocked} pending="Enviando…">Enviar brief para revisión</SubmitButton></div>
+      <SubmitButton className="btn block" disabled={blocked} pending="Enviando…">Enviar brief para revisión</SubmitButton>
     </form>
   );
 }

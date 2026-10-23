@@ -20,6 +20,7 @@ export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const go = (to: string) => { const u = req.nextUrl.clone(); u.pathname = to; u.search = to === '/acceso' ? `?next=${encodeURIComponent(path)}` : ''; return NextResponse.redirect(u); };
   if (path.startsWith('/cliente') && !user) return go('/acceso');
+  if (path.startsWith('/cuenta/contrasena') && !user) return go('/admin/acceso');
   if (path.startsWith('/admin') && !path.startsWith('/admin/acceso')) {
     if (!user) return go('/admin/acceso');
     const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();

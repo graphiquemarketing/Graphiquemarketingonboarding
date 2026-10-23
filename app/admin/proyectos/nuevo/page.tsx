@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/server/session';
 import { PACKAGES, PACKAGE_CODES } from '@/lib/catalog';
-import { Back, Note } from '@/components/ui';
+import { PageHead, Note } from '@/components/ui';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ActionForm } from '../../ActionForm';
 import { createManualAction } from '../../actions';
@@ -12,8 +12,7 @@ export default async function Nuevo() {
   await requireStaff(['comercial']);
   return (
     <div className="narrow stack">
-      <Back href="/admin">Proyectos</Back>
-      <h1>Alta de proyecto desde HubSpot</h1>
+      <PageHead back={{ href: '/admin', label: 'Proyectos' }} kicker="Comercial" title="Alta desde HubSpot" />
       <Note>Los CTA del sitio siguen enviando leads a HubSpot. Copia aquí los datos del contacto para abrir su expediente. Si el correo ya tiene una solicitud abierta, se unirá a ella.</Note>
       <div className="panel">
         <ActionForm action={createManualAction}>

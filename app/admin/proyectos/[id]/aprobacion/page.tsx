@@ -3,7 +3,7 @@ import { requireStaff } from '@/lib/server/session';
 import { getAnswers, getApprovals, getFiles, getOverrides, getProject, getReviews, latestFiles } from '@/lib/server/data';
 import { missingRequired } from '@/lib/questionnaire';
 import { BLOCKING, scopeItems } from '@/lib/scope';
-import { Back, Note } from '@/components/ui';
+import { PageHead, Note } from '@/components/ui';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ActionForm } from '../../../ActionForm';
 import { approveAction } from '../../../actions';
@@ -24,8 +24,7 @@ export default async function Aprobacion({ params }: { params: Promise<{ id: str
   const v = (approvals[0]?.version ?? 0) + 1;
   return (
     <div className="narrow stack">
-      <Back href={`/admin/proyectos/${id}/revision`}>Revisión</Back>
-      <h1>Aprobar versión v{v}</h1>
+      <PageHead back={{ href: `/admin/proyectos/${id}/revision`, label: 'Revisión' }} kicker={`${p.folio} · ${p.organizations?.name ?? ''}`} title={<>Aprobar versión <span className="g">v{v}</span></>} />
       <div className="panel stack">
         <dl className="kv">
           <dt>Proyecto</dt><dd>{p.folio} · {p.organizations?.name} · {p.package_code}</dd>

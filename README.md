@@ -7,7 +7,7 @@ Este repositorio es la **Fase C (MVP en staging)**. No modifica graphiquemarketi
 | Área | Dónde |
 |---|---|
 | Solicitud pública (`/solicitud?plan=`), confirmación, antispam y límite por IP | `app/solicitud`, `create_request()` |
-| Acceso de clientes con código de 6 dígitos (sin contraseña) | `app/acceso` |
+| Acceso de clientes con código por correo, 6 dígitos (sin contraseña) | `app/acceso` |
 | Invitación propia de 72 h, un solo uso, ligada al correo | `app/invitacion/[token]`, `create_invitation()`, `accept_invitation()` |
 | Personal con contraseña + MFA TOTP obligatorio (sin aal2 la base de datos no muestra nada) | `app/admin/acceso`, `is_staff()` |
 | Brief M01–M10 con visibilidad por paquete, autoguardado, «No lo sé», control de edición simultánea | `components/brief/BriefModule.tsx`, `save_answer()` |
@@ -22,7 +22,7 @@ Este repositorio es la **Fase C (MVP en staging)**. No modifica graphiquemarketi
 2. **Migraciones**: con la CLI de Supabase (`supabase link --project-ref <ref>` y `supabase db push`) o pegando en el SQL Editor, en orden, los archivos de `supabase/migrations/`. Después, opcionalmente, `supabase/seed.sql` (datos ficticios).
 3. **Auth** (Authentication › Providers / Settings):
    - Email: **desactivar «Allow new users to sign up»** (las cuentas de cliente solo se crean al aceptar una invitación).
-   - Plantilla «Magic Link»: debe mostrar el código `{{ .Token }}` (el portal usa código de 6 dígitos, no enlace). Vigencia del OTP: 600 s.
+   - Plantilla «Magic Link»: debe mostrar el código `{{ .Token }}` (el portal usa código, no enlace). Vigencia del OTP: 600 s. La longitud del código («Email OTP Length») debe coincidir con `NEXT_PUBLIC_EMAIL_OTP_LENGTH` (8 por omisión).
    - MFA: TOTP habilitado.
    - SMTP personalizado (Resend o Postmark) para que los códigos lleguen de forma confiable; configurar SPF, DKIM y DMARC en el dominio.
 4. **Personal de Graphique**: Authentication › Add user (correo y contraseña) y luego en SQL:

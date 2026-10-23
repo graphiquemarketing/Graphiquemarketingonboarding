@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FILE_CATEGORIES, checkFile, sniff, extOf, ALLOWED } from '@/lib/files';
 import { supabaseBrowser } from '@/lib/supabase/browser';
 import { confirmFileAction, registerFileAction } from '@/app/cliente/actions';
+import { Icon } from '@/components/Icon';
 
 type Item = { name: string; state: 'subiendo' | 'listo' | 'error'; msg?: string };
 
@@ -12,6 +13,7 @@ export function FileUploader({ projectId, replaceKey, replaceName }: { projectId
   const router = useRouter();
   const [cat, setCat] = useState<string>(FILE_CATEGORIES[0]);
   const [items, setItems] = useState<Item[]>([]);
+  const [over, setOver] = useState(false);
   const upd = (name: string, patch: Partial<Item>) => setItems((xs) => xs.map((x) => (x.name === name ? { ...x, ...patch } : x)));
 
   async function upload(files: FileList | null) {
@@ -36,21 +38,24 @@ export function FileUploader({ projectId, replaceKey, replaceName }: { projectId
 
   return (
     <div className="stack">
-      {replaceName && <p className="small">Subirás una <b>nueva versión</b> de {replaceName}. La anterior se conserva en el historial.</p>}
-      <div className="fgrid">
-        {!replaceKey && (
-          <div className="field"><label htmlFor="f_cat">Categoría</label>
-            <select id="f_cat" value={cat} onChange={(e) => setCat(e.target.value)}>{FILE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></div>
-        )}
-        <div className="field"><label htmlFor={`f_in_${replaceKey ?? 'new'}`}>{replaceKey ? 'Archivo' : 'Archivos'}</label>
-          <input id={`f_in_${replaceKey ?? 'new'}`} type="file" multiple={!replaceKey} onChange={(e) => { void upload(e.target.files); e.target.value = ''; }}
-            accept={Object.keys(ALLOWED).map((x) => `.${x}`).join(',')} aria-describedby="f_help" /></div>
-      </div>
+      {replaceName && <p className="small">Nueva versión de <b>{replaceName}</b>.</p>}
+      {!replaceKey && (
+        <div className="field" style={{ maxWidth: 360 }}><label htmlFor="f_cat">Categoría del material</label>
+          <select id="f_cat" value={cat} onChange={(e) => setCat(e.target.value)}>{FILE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></div>
+      )}
+      <label className={`dropzone${over ? ' over' : ''}`} htmlFor={`f_in_${replaceKey ?? 'new'}`}
+        onDragEnter={() => setOver(true)} onDragLeave={() => setOver(false)} onDrop={() => setOver(false)}>
+        <span className="ico"><Icon name="upload" size={22} /></span>
+        <b>{replaceKey ? 'Elige la nueva versión' : 'Arrastra tus archivos aquí o elígelos'}</b>
+        <span className="small muted">{replaceKey ? 'La versión anterior se conserva en el historial.' : `Se guardarán en «${cat}».`}</span>
+        <input id={`f_in_${replaceKey ?? 'new'}`} type="file" multiple={!replaceKey} onChange={(e) => { void upload(e.target.files); e.target.value = ''; }}
+          accept={Object.keys(ALLOWED).map((x) => `.${x}`).join(',')} aria-describedby="f_help" />
+      </label>
       <p className="help" id="f_help">PDF, Office, imágenes, Illustrator/Photoshop, video y ZIP. Límite por tipo: PDF y Office 25 MB, ZIP 200 MB, video 500 MB. No subas contraseñas.</p>
       {items.length > 0 && (
         <ul className="files" aria-live="polite">
           {items.map((i) => (
-            <li key={i.name}><span>{i.name}{i.msg && <><br /><span className="err">{i.msg}</span></>}</span>
+            <li key={i.name}><span className="ficon">{(i.name.split('.').pop() ?? '').slice(0, 4)}</span><span>{i.name}{i.msg && <><br /><span className="err">{i.msg}</span></>}</span>
               <span className={`pill tone-${i.state === 'listo' ? 'ok' : i.state === 'error' ? 'bad' : 'lead'}`}>{i.state === 'listo' ? 'Recibido' : i.state === 'error' ? 'Rechazado' : 'Subiendo…'}</span></li>
           ))}
         </ul>
