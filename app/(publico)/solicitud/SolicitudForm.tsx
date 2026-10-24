@@ -40,13 +40,17 @@ export function SolicitudForm({ initialPlan, utm }: { initialPlan: PackageCode |
         <p className="help">Precios de entrada del catálogo {CATALOG_VERSION}. La propuesta final depende del alcance.</p>
       </fieldset>
       <div className="fgrid">
-        {([['nombre', 'Nombre completo', 'text', 'name'], ['empresa', 'Empresa', 'text', 'organization'], ['correo', 'Correo', 'email', 'email'], ['telefono', 'Teléfono / WhatsApp', 'tel', 'tel']] as const).map(([k, l, t, ac]) => (
+        {([['nombre', 'Nombre', 'text', 'given-name'], ['apellidos', 'Apellidos', 'text', 'family-name'], ['empresa', 'Nombre de la empresa', 'text', 'organization'], ['telefono', 'Número de teléfono', 'tel', 'tel'], ['correo', 'Correo', 'email', 'email']] as const).map(([k, l, t, ac]) => (
           <div className="field" key={k}>
             <label htmlFor={`s_${k}`}>{l} <span className="req">*</span></label>
             <input id={`s_${k}`} name={k} type={t} autoComplete={ac} defaultValue={v[k]} required {...aria(k)} />
             {err(k)}
           </div>
         ))}
+        <div className="field">
+          <label htmlFor="s_sitio">URL del sitio web (opcional)</label>
+          <input id="s_sitio" name="sitio" type="text" inputMode="url" autoComplete="url" placeholder="empresa.com.mx" defaultValue={v.sitio} maxLength={200} />
+        </div>
       </div>
       <div className="field">
         <label htmlFor="s_comentario">Comentario (opcional)</label>
