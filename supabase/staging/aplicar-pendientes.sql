@@ -155,7 +155,7 @@ begin
   if octet_length(coalesce(p_value::text, '')) > 32768 then raise exception 'RESPUESTA_DEMASIADO_LARGA' using errcode = '22001'; end if;
   select revision into v_rev from public.answers where project_id = p_project and question_id = p_question for update;
   if found then
-    if p_expected_revision is not null and p_expected_revision <> v_rev then raise exception 'CONFLICTO_DE_EDICION' using errcode = '40001'; end if;
+    if p_expected_revision is not null and p_expected_revision <> v_rev then raise exception 'CONFLICTO_DE_EDICION' using errcode = 'P0409'; end if;
     update public.answers set value = p_value, revision = v_rev + 1, updated_by = auth.uid(), updated_at = now()
      where project_id = p_project and question_id = p_question;
     return v_rev + 1;
