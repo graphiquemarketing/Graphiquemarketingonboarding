@@ -10,12 +10,14 @@ import { Ring } from '@/components/Ring';
 import { Icon } from '@/components/Icon';
 import { saveAnswerAction } from '@/app/cliente/actions';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'offline' | 'error' | 'conflict';
+type SaveState = 'idle' | 'saving' | 'saved' | 'offline' | 'error' | 'conflict' | 'blocked';
+const MAX_RETRIES = 5;
 const SAVE_TEXT: Record<SaveState, string> = {
   idle: 'Se guarda solo', saving: 'Guardando…', saved: 'Guardado', offline: 'Sin conexión: guardaremos al reconectar',
   error: 'No se pudo guardar. Reintentando…', conflict: 'Otra persona editó una respuesta. Recarga para ver su versión.',
+  blocked: 'No se guardó. Recarga la página.',
 };
-const SAVE_CLASS: Record<SaveState, string> = { idle: 'muted', saving: 't-warn', saved: 't-ok', offline: 't-warn', error: 't-bad', conflict: 't-bad' };
+const SAVE_CLASS: Record<SaveState, string> = { idle: 'muted', saving: 't-warn', saved: 't-ok', offline: 't-warn', error: 't-bad', conflict: 't-bad', blocked: 't-bad' };
 
 export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: initialRev }: {
   projectId: string; pkg: PackageCode; moduleIndex: number; initial: Answers; revisions: Record<string, number>;
@@ -29,30 +31,44 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
   const rev = useRef<Record<string, number>>(initialRev);
   const pending = useRef<Map<string, unknown>>(new Map());
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retries = useRef(0);
+  const stopped = useRef(false);
 
   useEffect(() => { track('onboarding_brief_start', { paquete: pkg }, `brief_start:${projectId}`); }, [pkg, projectId]);
 
   const flush = useCallback(async () => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; }
     if (!pending.current.size) return true;
+    if (stopped.current) return false;
     if (typeof navigator !== 'undefined' && !navigator.onLine) { setStatus('offline'); return false; }
     setStatus('saving');
     const batch = [...pending.current.entries()];
     pending.current.clear();
     let ok = true;
-    for (const [qid, value] of batch) {
-      const r = await saveAnswerAction(projectId, qid, value, rev.current[qid] ?? null);
-      if (r.ok) { rev.current[qid] = r.data!.revision; }
-      else if ('conflict' in r && r.conflict) { setStatus('conflict'); setError(r.error); return false; }
-      else { ok = false; pending.current.set(qid, value); setError(r.error); }
+    for (let i = 0; i < batch.length; i++) {
+      const [qid, value] = batch[i];
+      let r: Awaited<ReturnType<typeof saveAnswerAction>>;
+      try { r = await saveAnswerAction(projectId, qid, value, rev.current[qid] ?? null); }
+      catch { r = { ok: false, error: 'No pudimos guardar. Revisa tu conexión.' }; }
+      if (r.ok) { rev.current[qid] = r.data!.revision; continue; }
+      // Lo que no se guardó vuelve a la cola sin pisar cambios más nuevos.
+      for (const [k, v] of batch.slice(i)) if (!pending.current.has(k)) pending.current.set(k, v);
+      setError(r.error);
+      if ('conflict' in r && r.conflict) { stopped.current = true; setStatus('conflict'); return false; }
+      if ('fatal' in r && r.fatal) { stopped.current = true; pending.current.clear(); setStatus('blocked'); return false; }
+      ok = false;
+      break;
     }
-    if (ok) { setStatus('saved'); setSavedAt(new Date()); setError(null); }
-    else { setStatus('error'); timer.current = setTimeout(flush, 4000); }
-    return ok;
+    if (ok) { retries.current = 0; setStatus('saved'); setSavedAt(new Date()); setError(null); return true; }
+    retries.current += 1;
+    if (retries.current > MAX_RETRIES) { stopped.current = true; setStatus('blocked'); return false; }
+    setStatus('error');
+    timer.current = setTimeout(flush, Math.min(4000 * 2 ** (retries.current - 1), 60000));
+    return false;
   }, [projectId]);
 
   useEffect(() => {
-    const on = () => { if (pending.current.size) void flush(); };
+    const on = () => { if (pending.current.size && !stopped.current) { retries.current = 0; void flush(); } };
     const before = (e: BeforeUnloadEvent) => { if (pending.current.size) { e.preventDefault(); } };
     window.addEventListener('online', on);
     window.addEventListener('beforeunload', before);
@@ -62,6 +78,7 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
   const set = (qid: string, value: unknown, immediate = false) => {
     setAnswers((a) => ({ ...a, [qid]: value }));
     pending.current.set(qid, value);
+    if (stopped.current) return;
     setStatus('saving');
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(flush, immediate ? 50 : 800);
@@ -117,7 +134,7 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
           <div className="prog" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Avance total del brief"><i style={{ width: `${pct}%` }} /></div>
         </header>
         <div className="qcard-body">
-          {error && status !== 'saved' && <div className="note bad" role="alert">{error}{status === 'conflict' && <> <button className="linkbtn" type="button" onClick={() => location.reload()}>Recargar</button></>}</div>}
+          {error && status !== 'saved' && <div className="note bad" role="alert">{error}{(status === 'conflict' || status === 'blocked') && <> <button className="linkbtn" type="button" onClick={() => location.reload()}>Recargar</button></>}</div>}
           <form noValidate onSubmit={(e) => e.preventDefault()}>
             {visible.map((q) => <QuestionField key={q.id} q={q} pkg={pkg} answers={answers} onChange={set} />)}
           </form>

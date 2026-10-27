@@ -10,14 +10,15 @@ import { sendMail, templates, notifyInternal } from '@/lib/server/email';
 import { clientRecipients } from '@/lib/server/recipients';
 
 export async function saveAnswerAction(projectId: string, questionId: string, value: unknown, expected: number | null)
-  : Promise<ActionResult<{ revision: number; value: unknown }> & { conflict?: boolean }> {
+  : Promise<ActionResult<{ revision: number; value: unknown }> & { conflict?: boolean; fatal?: boolean }> {
   const { sb } = await requireClient();
   const q = QUESTIONS[questionId];
   if (!q) return { ok: false, error: 'Esa pregunta no existe.' };
   const { answers } = await getAnswers(sb, projectId);
   const clean = sanitizeAnswer(q, value, { ...answers, [questionId]: value });
   const { data, error } = await sb.rpc('save_answer', { p_project: projectId, p_question: questionId, p_value: clean ?? null, p_expected_revision: expected });
-  if (error) return { ok: false, error: friendlyError(error), conflict: error.message.includes('CONFLICTO') };
+  // fatal = error de negocio: reintentar no sirve (evita bucles que agotan el pool de conexiones).
+  if (error) return { ok: false, error: friendlyError(error), conflict: error.message.includes('CONFLICTO'), fatal: /BRIEF_BLOQUEADO|SIN_PERMISO|PREGUNTA_INVALIDA|RESPUESTA_DEMASIADO_LARGA/.test(error.message) };
   return { ok: true, data: { revision: data as number, value: clean } };
 }
 
