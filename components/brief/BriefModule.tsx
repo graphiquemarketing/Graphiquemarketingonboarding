@@ -33,11 +33,21 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retries = useRef(0);
   const stopped = useRef(false);
+  const inFlight = useRef<Promise<boolean> | null>(null);
 
   useEffect(() => { track('onboarding_brief_start', { paquete: pkg }, `brief_start:${projectId}`); }, [pkg, projectId]);
 
-  const flush = useCallback(async () => {
+  // Un solo guardado a la vez: si ya hay uno en curso, se espera y luego se guarda lo nuevo.
+  const flush = useCallback(async (): Promise<boolean> => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    while (inFlight.current) await inFlight.current;
+    const run = doFlush();
+    inFlight.current = run;
+    try { return await run; } finally { inFlight.current = null; }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const doFlush = async (): Promise<boolean> => {
     if (!pending.current.size) return true;
     if (stopped.current) return false;
     if (typeof navigator !== 'undefined' && !navigator.onLine) { setStatus('offline'); return false; }
@@ -63,9 +73,11 @@ export function BriefModule({ projectId, pkg, moduleIndex, initial, revisions: i
     retries.current += 1;
     if (retries.current > MAX_RETRIES) { stopped.current = true; setStatus('blocked'); return false; }
     setStatus('error');
-    timer.current = setTimeout(flush, Math.min(4000 * 2 ** (retries.current - 1), 60000));
+    timer.current = setTimeout(() => void flushRef.current(), Math.min(4000 * 2 ** (retries.current - 1), 60000));
     return false;
-  }, [projectId]);
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
 
   useEffect(() => {
     const on = () => { if (pending.current.size && !stopped.current) { retries.current = 0; void flush(); } };
